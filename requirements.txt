@@ -5,4 +5,4 @@ pillow
 scikit-learn
 opencv-python
 numpy
-altair
+altair==4.2.2
