@@ -1,0 +1,8 @@
+streamlit
+tensorflow
+torch
+Pillow
+numpy
+matpotlib
+seaborn
+scikit-learn
