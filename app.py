@@ -41,7 +41,7 @@ if uploaded_file:
             st.success(f"Prediction: {np.argmax(prediction)}")
 
         elif model_choice == "ViT (PyTorch)":
-            model = torch.load("vit_model_best.pth", map_location=torch.device("cpu"))
+            model = torch.load("vit_model_best.pth", map_location=torch.device("cpu"), weights_only=False)
             model.eval()
             img = image.resize((224, 224))
             img_tensor = torch.tensor(np.array(img)).permute(2, 0, 1).unsqueeze(0).float() / 255
