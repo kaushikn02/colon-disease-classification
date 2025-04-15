@@ -7,3 +7,4 @@ opencv-python
 numpy
 altair==4.2.2
 torch
+gdown
