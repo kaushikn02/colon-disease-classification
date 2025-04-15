@@ -6,27 +6,20 @@ import numpy as np
 import os
 import gdown
 
-# 🔁 Replace this with the actual BAM class if it's custom
-class BAM(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
-        super(BAM, self).__init__(**kwargs)
-        # define your BAM logic here
-
-    def call(self, inputs):
-        # define forward pass
-        return inputs  # placeholder
-
 st.title("🧠 Multi-Model Deep Learning Inference")
 
 # --- Google Drive model file IDs ---
 RESNET_ID = "1-51AUdrOgRadWMeHYK7xLXhIpwDMX5Wd"
 VIT_ID = "1zThePeTMXd16fnVLsS0doz9D6RQ4EHfx"
 
-# --- Helper function to download model from Google Drive ---
+# --- Helper function to safely download models from Google Drive ---
 def download_model(file_id, output_name):
     if not os.path.exists(output_name):
-        url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, output_name, quiet=False, fuzzy=True, use_cookies=False)
+        gdown.download_file_from_google_drive(
+            file_id=file_id,
+            dest_path=output_name,
+            quiet=False
+        )
 
 # --- Download models if not present ---
 download_model(RESNET_ID, "resnet50v2_bam_best.h5")
@@ -35,6 +28,12 @@ download_model(VIT_ID, "vit_model_best.pth")
 # --- UI components ---
 model_choice = st.selectbox("Select a model", ["ResNet50V2 + BAM (Keras)", "ViT (PyTorch)"])
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
+
+# --- Load custom layer if needed ---
+class BAM(tf.keras.layers.Layer):
+    def __init__(self, **kwargs):
+        super(BAM, self).__init__(**kwargs)
+        # dummy structure if needed (modify if your model has custom logic)
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
