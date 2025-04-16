@@ -9,31 +9,53 @@ import gdown
 st.title("🧠 Multi-Model Deep Learning Inference")
 
 # --- Google Drive model file IDs ---
-RESNET_ID = "1-51AUdrOgRadWMeHYK7xLXhIpwDMX5Wd"
+RESNET_KERAS_ID = "1G3xRNdW7LK7lAtln80HwJjaUk_Cx-CII"  # New Keras model ID
 VIT_ID = "1zThePeTMXd16fnVLsS0doz9D6RQ4EHfx"
 
-# --- Helper function to safely download models from Google Drive ---
+# --- BAM block definition ---
+from tensorflow.keras.layers import (
+    GlobalAveragePooling2D, GlobalMaxPooling2D, Dense, Dropout, Multiply, Reshape,
+    Conv2D, BatchNormalization, Activation, Add
+)
+
+def bam_block(input_feature, ratio=8, dilation_rate=4):
+    channel = input_feature.shape[-1]
+
+    shared_dense = Dense(channel // ratio, activation='relu', use_bias=False)
+    avg_pool = GlobalAveragePooling2D()(input_feature)
+    max_pool = GlobalMaxPooling2D()(input_feature)
+
+    avg_pool = shared_dense(avg_pool)
+    max_pool = shared_dense(max_pool)
+
+    channel_attention = Add()([avg_pool, max_pool])
+    channel_attention = Dense(channel, activation='sigmoid', use_bias=False)(channel_attention)
+    channel_attention = Multiply()([input_feature, Reshape((1, 1, channel))(channel_attention)])
+
+    x = Conv2D(channel // ratio, kernel_size=1, padding="same")(channel_attention)
+    x = BatchNormalization()(x)
+    x = Activation("relu")(x)
+    x = Conv2D(1, kernel_size=3, padding="same", dilation_rate=dilation_rate)(x)
+    x = BatchNormalization()(x)
+    x = Activation("sigmoid")(x)
+
+    spatial_attention = Multiply()([channel_attention, x])
+    return spatial_attention
+
+# --- Helper function to download from Google Drive ---
 def download_model(file_id, output_name):
     if not os.path.exists(output_name):
-        gdown.download_file_from_google_drive(
-            file_id=file_id,
-            dest_path=output_name,
-            quiet=False
-        )
+        gdown.download(id=file_id, output=output_name, quiet=False)
 
-# --- Download models if not present ---
-download_model(RESNET_ID, "resnet50v2_bam_best.h5")
+# --- Download models if not already present ---
+download_model(RESNET_KERAS_ID, "resnet50v2_bam_best.keras")
 download_model(VIT_ID, "vit_model_best.pth")
 
-# --- UI components ---
+# --- UI Components ---
 model_choice = st.selectbox("Select a model", ["ResNet50V2 + BAM (Keras)", "ViT (PyTorch)"])
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
-# --- Load custom layer if needed ---
-class BAM(tf.keras.layers.Layer):
-    def __init__(self, **kwargs):
-        super(BAM, self).__init__(**kwargs)
-        # dummy structure if needed (modify if your model has custom logic)
+class_names = ['Normal', 'Ulcerative Colitis', 'Polyps', 'Esophagitis']
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
@@ -44,13 +66,14 @@ if uploaded_file:
 
         if model_choice == "ResNet50V2 + BAM (Keras)":
             model = tf.keras.models.load_model(
-                "resnet50v2_bam_best.h5",
-                custom_objects={"BAM": BAM}
+                "resnet50v2_bam_best.keras",
+                custom_objects={"bam_block": bam_block}
             )
             img = image.resize((224, 224))
             img_array = np.expand_dims(np.array(img) / 255.0, axis=0)
             prediction = model.predict(img_array)
-            st.success(f"Prediction: {np.argmax(prediction)}")
+            predicted_class = class_names[np.argmax(prediction)]
+            st.success(f"📌 Prediction: **{predicted_class}**")
 
         elif model_choice == "ViT (PyTorch)":
             model = torch.load("vit_model_best.pth", map_location=torch.device("cpu"))
@@ -59,4 +82,5 @@ if uploaded_file:
             img_tensor = torch.tensor(np.array(img)).permute(2, 0, 1).unsqueeze(0).float() / 255
             with torch.no_grad():
                 output = model(img_tensor)
-            st.success(f"Prediction: {output.argmax(1).item()}")
+            predicted_class = class_names[output.argmax(1).item()]
+            st.success(f"📌 Prediction: **{predicted_class}**")
