@@ -6,11 +6,11 @@ import numpy as np
 import os
 import gdown
 
-st.title("🧠 Multi-Model Deep Learning Inference")
+st.title(" Multi-Model Deep Learning Inference")
 
 # --- Google Drive model file IDs ---
-RESNET_KERAS_ID = "1G3xRNdW7LK7lAtln80HwJjaUk_Cx-CII"  # New Keras model ID
-VIT_ID = "1zThePeTMXd16fnVLsS0doz9D6RQ4EHfx"
+RESNET_KERAS_ID = "1G3xRNdW7LK7lAtln80HwJjaUk_Cx-CII"
+VIT_ID = "1BXiIpLdShnGuOmJGAm4TdH_Xt4UWBtui"  # Updated ID for ViT model (state_dict)
 
 # --- BAM block definition ---
 from tensorflow.keras.layers import (
@@ -47,11 +47,11 @@ def download_model(file_id, output_name):
     if not os.path.exists(output_name):
         gdown.download(id=file_id, output=output_name, quiet=False)
 
-# --- Download models if not already present ---
+# --- Download models ---
 download_model(RESNET_KERAS_ID, "resnet50v2_bam_best.keras")
 download_model(VIT_ID, "vit_model_best.pth")
 
-# --- UI Components ---
+# --- UI ---
 model_choice = st.selectbox("Select a model", ["ResNet50V2 + BAM (Keras)", "ViT (PyTorch)"])
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
@@ -62,7 +62,7 @@ if uploaded_file:
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
     if st.button("Predict"):
-        st.write("🧪 Running prediction...")
+        st.write(" Running prediction...")
 
         if model_choice == "ResNet50V2 + BAM (Keras)":
             model = tf.keras.models.load_model(
@@ -73,13 +73,37 @@ if uploaded_file:
             img_array = np.expand_dims(np.array(img) / 255.0, axis=0)
             prediction = model.predict(img_array)
             predicted_class = class_names[np.argmax(prediction)]
-            st.success(f"📌 Prediction: **{predicted_class}**")
+            st.success(f" Prediction: **{predicted_class}**")
 
         elif model_choice == "ViT (PyTorch)":
-            model = torch.load("vit_model_best.pth", map_location=torch.device("cpu"))
+            from transformers import ViTForImageClassification, AutoFeatureExtractor
+
+            # Define model architecture
+            class MyViT(torch.nn.Module):
+                def __init__(self, num_classes=4):
+                    super(MyViT, self).__init__()
+                    self.vit = ViTForImageClassification.from_pretrained(
+                        'google/vit-base-patch16-224-in21k',
+                        num_labels=num_classes,
+                        ignore_mismatched_sizes=True
+                    )
+
+                def forward(self, x):
+                    return self.vit(x).logits
+
+            # Load model
+            model = MyViT(num_classes=4)
+            model.load_state_dict(torch.load("vit_model_best.pth", map_location=torch.device("cpu")))
             model.eval()
+
+            # Preprocess image
+            feature_extractor = AutoFeatureExtractor.from_pretrained('google/vit-base-patch16-224-in21k')
             img = image.resize((224, 224))
-            img_tensor = torch.tensor(np.array(img)).permute(2, 0, 1).unsqueeze(0).float() / 255
+            img_np = np.array(img).astype(np.float32) / 255.0
+            img_np = (img_np - feature_extractor.image_mean) / feature_extractor.image_std
+            img_tensor = torch.tensor(img_np).permute(2, 0, 1).unsqueeze(0)
+
+            # Predict
             with torch.no_grad():
                 output = model(img_tensor)
             predicted_class = class_names[output.argmax(1).item()]
