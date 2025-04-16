@@ -49,7 +49,7 @@ def download_model(file_id, output_name):
 
 # --- Download models ---
 download_model(RESNET_KERAS_ID, "resnet50v2_bam_best.keras")
-download_model(VIT_ID, "vit_model_best.pth")
+download_model(VIT_ID, "vit_model_best2.pth")
 
 # --- UI ---
 model_choice = st.selectbox("Select a model", ["ResNet50V2 + BAM (Keras)", "ViT (PyTorch)"])
@@ -93,7 +93,7 @@ if uploaded_file:
 
             # Load model
             model = MyViT(num_classes=4)
-            model.load_state_dict(torch.load("vit_model_best.pth", map_location=torch.device("cpu")))
+            model.load_state_dict(torch.load("vit_model_best2.pth", map_location=torch.device("cpu")))
             model.eval()
 
             # Preprocess image
