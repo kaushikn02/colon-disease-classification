@@ -6,7 +6,7 @@ import numpy as np
 import os
 import gdown
 
-st.title(" Multi-Model Deep Learning Inference")
+st.title(" GastroIntestinal Disease Classification")
 
 # --- Google Drive model file IDs ---
 RESNET_KERAS_ID = "1G3xRNdW7LK7lAtln80HwJjaUk_Cx-CII"
@@ -52,7 +52,7 @@ download_model(RESNET_KERAS_ID, "resnet50v2_bam_best.keras")
 download_model(VIT_ID, "vit_model_best2.pth")
 
 # --- UI ---
-model_choice = st.selectbox("Select a model", ["ResNet50V2 + BAM (Keras)", "ViT (PyTorch)"])
+model_choice = st.selectbox("Select a model", ["ResNet50V2 + BAM", "VisionTransformer"])
 uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
 class_names = ['Normal', 'Ulcerative Colitis', 'Polyps', 'Esophagitis']
