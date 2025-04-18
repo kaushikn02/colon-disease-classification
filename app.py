@@ -64,7 +64,7 @@ if uploaded_file:
     if st.button("Predict"):
         st.write(" Running prediction...")
 
-        if model_choice == "ResNet50V2 + BAM (Keras)":
+        if model_choice == "ResNet50V2 + BAM":
             model = tf.keras.models.load_model(
                 "resnet50v2_bam_best.keras",
                 custom_objects={"bam_block": bam_block}
@@ -75,7 +75,7 @@ if uploaded_file:
             predicted_class = class_names[np.argmax(prediction)]
             st.success(f" Prediction: **{predicted_class}**")
 
-        elif model_choice == "ViT (PyTorch)":
+        elif model_choice == "VisionTransformer":
             from transformers import ViTForImageClassification, AutoFeatureExtractor
 
             # Define model architecture
