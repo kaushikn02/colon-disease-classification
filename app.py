@@ -6,7 +6,7 @@ import numpy as np
 import os
 import gdown
 
-st.title(" GastroIntestinal Disease Classification")
+st.title("🩺 GastroIntestinal Disease Classification")
 
 # --- Google Drive model file IDs ---
 RESNET_KERAS_ID = "1G3xRNdW7LK7lAtln80HwJjaUk_Cx-CII"
@@ -57,6 +57,14 @@ uploaded_file = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
 
 class_names = ['Normal', 'Ulcerative Colitis', 'Polyps', 'Esophagitis']
 
+# Disease Info dictionary
+disease_info = {
+    "Normal": "It seems like you have a **Healthy gastrointestinal tract**. No signs of disease are detected.   Keep maintaining a balanced diet, stay hydrated, and have regular check-ups to ensure continued good health !",
+    "Ulcerative Colitis": "It seems like you have **Ulcerative Colitis**, an inflammatory bowel disease causing inflammation and ulcers in the digestive tract.  Treatment typically includes medications like anti-inflammatory drugs (e.g., mesalamine), immune system suppressors, and sometimes surgery. Dietary changes and stress management are also crucial.",
+    "Polyps": "It seems like you have **Polyps** in your gastrointestinal tract, which are growths on the lining of your colon or stomach.  Although often benign, some polyps can turn cancerous. Treatment usually involves removal via endoscopy and regular screening to monitor for new growths.",
+    "Esophagitis": "It seems like you have **Esophagitis**, which is inflammation of the esophagus often caused by acid reflux, infection, or irritation.  Treatment includes antacids, proton pump inhibitors (PPIs), and avoiding foods that trigger reflux. Infections might require specific antimicrobial therapy."
+}
+
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_column_width=True)
@@ -74,6 +82,7 @@ if uploaded_file:
             prediction = model.predict(img_array)
             predicted_class = class_names[np.argmax(prediction)]
             st.success(f" Prediction: **{predicted_class}**")
+            st.info(disease_info[predicted_class])
 
         elif model_choice == "VisionTransformer":
             from transformers import ViTForImageClassification, AutoFeatureExtractor
@@ -107,4 +116,5 @@ if uploaded_file:
             with torch.no_grad():
                 output = model(img_tensor)
             predicted_class = class_names[output.argmax(1).item()]
-            st.success(f"📌 Prediction: **{predicted_class}**")
+            st.success(f" Prediction: **{predicted_class}**")
+            st.info(disease_info[predicted_class])
