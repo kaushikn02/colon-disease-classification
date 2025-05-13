@@ -6,7 +6,7 @@ import numpy as np
 import os
 import gdown
 
-st.title("🩺 GastroIntestinal Disease Classification")
+st.title(" GastroIntestinal Disease Classification")
 
 # --- Google Drive model file IDs ---
 RESNET_KERAS_ID = "1G3xRNdW7LK7lAtln80HwJjaUk_Cx-CII"
